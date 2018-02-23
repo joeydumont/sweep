@@ -12,6 +12,7 @@
 import os
 import re
 import argparse
+import subprocess
 
 # ------------------------------ Configuration ------------------------------ #
 
@@ -31,6 +32,10 @@ parser.add_argument("--parameters",
 args = parser.parse_args()
 
 # ----------------------------- Initialization ------------------------------ #
+
+# -- Open the template file.
+with open(args.template) as template:
+	template_lines = template.readlines()
 
 # -- Determine the number of parameters to sweep over (number of columns).
 f = open(args.parameters)
@@ -64,3 +69,22 @@ for i in range(size_sweep):
 
 	if not os.path.exists(symlinkName):
 		os.symlink(dirname,symlinkName)
+
+	# -- String Substitution
+	# -- For each line of the file, determine if there is parameter and replace
+	# -- it with value in the parameters file, for each line of the parameters file.
+	with open(dirname+"/"+args.template, 'w') as out_template:
+		for template_line in template_lines:
+			sub_template_line = template_line
+			for j in range(n_parameters):
+				sub_template_line = re.sub(r"~~"+split_header[j]+"~~",
+					                         lines[i].split()[j],
+					                         sub_template_line)
+			out_template.write(sub_template_line)
+		out_template.write("\n")
+
+	# -- Call the batch job.
+	os.chdir(dirname)
+	proc = subprocess.Popen(["srun {}".format(args.template)],
+             stdin=None, stdout=None, stderr=None, close_fds=True)
+	os.chdir("../")
