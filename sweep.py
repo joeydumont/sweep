@@ -85,6 +85,7 @@ for i in range(size_sweep):
 
 	# -- Call the batch job.
 	os.chdir(dirname)
-	proc = subprocess.Popen(["srun {}".format(args.template)],
+	print(os.getcwd())
+	proc = subprocess.Popen(["srun", "{}".format(args.template)],
              stdin=None, stdout=None, stderr=None, close_fds=True)
 	os.chdir("../")
