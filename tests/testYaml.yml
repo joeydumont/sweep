@@ -1,0 +1,12 @@
+Batch Name: testBatchName
+Batch File:
+  - testBatchFile
+Template Files:
+  - testTemplateFile
+Data Files:
+  - testData
+Linked Files:
+  - testLinkedFile
+Copied Files:
+  - testCopiedFile
+  - testCopiedFile2
