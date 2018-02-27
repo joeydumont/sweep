@@ -59,14 +59,11 @@ headerParameter = re.sub(r"^([^\w]+)",
 # Compute the number of parameters.
 ##TODO: Multiple data files.
 split_header = re.split('\s+',headerParameter)[0:-1]
-print(split_header)
 n_parameters = len(split_header)
 
 # Number of lines of the file determines the number of directories created.
 data_lines = parameterFile.read().splitlines()
 size_sweep = len(data_lines)
-print(size_sweep)
-print(data_lines)
 
 # -- Create the directory structure.
 for i in range(size_sweep):
@@ -76,8 +73,6 @@ for i in range(size_sweep):
 
 	symLinkName = dirname[0:dirname.rfind("-")+1]
 	for j in range(n_parameters):
-                print(j)
-                print(data_lines[i])
                 symLinkName += split_header[j]+"{}".format(data_lines[i].split()[j])
 	symLinkName += ".SW"
 
@@ -89,11 +84,10 @@ for i in range(size_sweep):
 	dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
 
 	try:
-                for file in yamlFile['Copied Files']:
-                        shutil.copy(file, dirname)
-        except KeyError:
-                continue
-
+		for file in yamlFile['Copied Files']:
+			shutil.copy(file, dirname)
+	except KeyError:
+		continue
 
 # -- Link the necessary files into the directory structure.
 for i in range(size_sweep):
