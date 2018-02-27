@@ -24,14 +24,16 @@ def ConstructDirnameFromLoopIndex(config_file,loop_index):
 	This returns the name of the created directory as a function of the loop
 	index, where the loop_index is in [0,number_parameters-1].
 	"""
-	batchName = config_file['Batch Name']
-	extensionIndex = batchName.rfind(".")
-	if extensionIndex < 0:
-		extensionIndex = len(batchName)
-	dirname = batchName[0:extensionIndex]+"-{:05g}.SW".format(loop_index+1)
+	try:
+		batchName = config_file['Batch Name']
+	except KeyError:
+		print("Your configuration file MUST specify a batch name.")
+		raise
+
+	# Folder names à la BQTools.
+	dirname = batchName+"-{:05g}.SW".format(loop_index+1)
 
 	return dirname
-
 
 # ----------------------------- Argument Parsing ---------------------------- #
 parser = argparse.ArgumentParser(usage='%(prog)s yaml_config_file')
@@ -44,11 +46,20 @@ args = parser.parse_args()
 # ----------------------------- Initialization ------------------------------ #
 
 # -- Open the config file.
-configFile = open(args.config, 'r')
+try:
+	configFile = open(args.config, 'r')
+except OSError:
+	raise OSError("Your configuration file {} could not be opened. Make sure it exists.".format(args.config))
+
 yamlFile   = yaml.load(configFile)
 
 # -- Determine the number of parameters to sweep over.
-parameterFile = open(yamlFile['Data Files'][0], 'r')
+##TODO: Multiple data files.
+try:
+	parameterFile = open(yamlFile['Data Files'][0], 'r')
+except OSError:
+	raise OSError("Your data file {} could not be opened. Make sure it exists.".format(yamlFile['DataFiles'][0]))
+
 headerParameter = parameterFile.readline()
 
 # Sanitize the line by removing everything before the first word.
@@ -57,7 +68,7 @@ headerParameter = re.sub(r"^([^\w]+)",
 	                     headerParameter)
 
 # Compute the number of parameters.
-##TODO: Multiple data files.
+##TODO: Don't match final whitespace (why is it even there?)
 split_header = re.split('\s+',headerParameter)[0:-1]
 n_parameters = len(split_header)
 
@@ -83,6 +94,7 @@ for i in range(size_sweep):
 for i in range(size_sweep):
 	dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
 
+	# Catch key errors and continue.
 	try:
 		for file in yamlFile['Copied Files']:
 			shutil.copy(file, dirname)
@@ -93,14 +105,26 @@ for i in range(size_sweep):
 for i in range(size_sweep):
 	dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
 	os.chdir(dirname)
-	for file in yamlFile['Linked Files']:
-		if os.path.exists(file):
-			os.remove(file)
-		os.symlink("../"+file,file)
+	try:
+		for file in yamlFile['Linked Files']:
+			if os.path.exists(file):
+				os.remove(file)
+			os.symlink("../"+file,file)
+	except KeyError:
+		continue
 	os.chdir("../")
 
 # -- String substitution in all template files.
-collection = [yamlFile['Batch File'][0]] + [item for item in yamlFile['Template Files']]
+try:
+	collection = [yamlFile['Batch File'][0]]
+except KeyError:
+	print("Your config file MUST name a batch file.")
+	raise
+
+try:
+	collection += [item for item in yamlFile['Template Files']]
+except KeyError:
+	pass
 
 for template_file in collection:
 
@@ -127,5 +151,21 @@ for template_file in collection:
 for i in range(size_sweep):
 	dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
 	os.chdir(dirname)
-	proc = subprocess.Popen(["sbatch", "{}".format(yamlFile['Batch File'][0])])
+
+	# -- Create the files for stdout and stderr.
+	std_basename = "{}-{:05g}".format(yamlFile['Batch Name'],i)
+	f_stdout = open(std_basename+".out", 'w')
+	f_stderr = open(std_basename+".err", 'w')
+	try:
+		proc = subprocess.check_call(["sbatch", "{}".format(yamlFile['Batch File'][0])],
+		                         	 stdin=None,
+		                         	 stdout=f_stdout,
+		                         	 stderr=f_stderr)
+	except FileNotFoundError:
+		print("Your cluster does not seem to support SLURM. Start your jobs manually.")
+		pass
+	except subprocess.CalledProcessError:
+		pass
+	f_stdout.close()
+	f_stderr.close()
 	os.chdir("../")

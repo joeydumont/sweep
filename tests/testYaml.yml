@@ -1,12 +1,26 @@
+# Basic configuration file for sweep.
+
+# Batch Name MUST be specified.
 Batch Name: testBatchName
+
+# Batch File MUST be specified, as we will run sbatch on this file.
+# It is considered a template file by default.
 Batch File:
   - testBatchFile
-Template Files:
-  - testTemplateFile
+
+# File(s) that contain the values of the parameters that we wish to sweep over.
 Data Files:
   - testData
+
+# Files where we look for variables and substitute the data supplied in data files.
+Template Files:
+  - testTemplateFile
+
+# Files that should be accessible to the job (symlinked).
 Linked Files:
   - testLinkedFile
+
+# Files that should be accessible to the job (copied).
 Copied Files:
   - testCopiedFile
   - testCopiedFile2
