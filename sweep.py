@@ -34,7 +34,7 @@ def ConstructDirnameFromLoopIndex(config_file,loop_index):
 
 
 # ----------------------------- Argument Parsing ---------------------------- #
-parser = argparse.ArgumentParser(usage='$(prog)s yaml_config_file')
+parser = argparse.ArgumentParser(usage='%(prog)s yaml_config_file')
 parser.add_argument("config",
 					type=str,
 					help="YAML config file where the template files, the files \
@@ -58,12 +58,15 @@ headerParameter = re.sub(r"^([^\w]+)",
 
 # Compute the number of parameters.
 ##TODO: Multiple data files.
-split_header = headerParameter.split()
+split_header = re.split('\s+',headerParameter)[0:-1]
+print(split_header)
 n_parameters = len(split_header)
 
 # Number of lines of the file determines the number of directories created.
 data_lines = parameterFile.read().splitlines()
 size_sweep = len(data_lines)
+print(size_sweep)
+print(data_lines)
 
 # -- Create the directory structure.
 for i in range(size_sweep):
@@ -73,7 +76,9 @@ for i in range(size_sweep):
 
 	symLinkName = dirname[0:dirname.rfind("-")+1]
 	for j in range(n_parameters):
-		symLinkName += split_header[j]+"{}".format(data_lines[i].split()[j])
+                print(j)
+                print(data_lines[i])
+                symLinkName += split_header[j]+"{}".format(data_lines[i].split()[j])
 	symLinkName += ".SW"
 
 	if not os.path.exists(symLinkName):
@@ -83,8 +88,11 @@ for i in range(size_sweep):
 for i in range(size_sweep):
 	dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
 
-	for file in yamlFile['Copied Files']:
-		shutil.copy(file, dirname)
+	try:
+                for file in yamlFile['Copied Files']:
+                        shutil.copy(file, dirname)
+        except KeyError:
+                continue
 
 
 # -- Link the necessary files into the directory structure.
