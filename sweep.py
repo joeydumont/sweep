@@ -34,7 +34,7 @@ def ConstructDirnameFromLoopIndex(config_file,loop_index):
 
 
 # ----------------------------- Argument Parsing ---------------------------- #
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(usage='$(prog)s yaml_config_file')
 parser.add_argument("config",
 					type=str,
 					help="YAML config file where the template files, the files \
@@ -125,5 +125,5 @@ for template_file in collection:
 for i in range(size_sweep):
 	dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
 	os.chdir(dirname)
-	#proc = subprocess.Popen(["sbatch", "{}".format(yamlFile['Batch File'][0])])
+	proc = subprocess.Popen(["sbatch", "{}".format(yamlFile['Batch File'][0])])
 	os.chdir("../")
