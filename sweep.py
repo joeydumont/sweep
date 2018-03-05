@@ -41,6 +41,7 @@ parser.add_argument("config",
 					type=str,
 					help="YAML config file where the template files, the files \
 							to be copied or linked are listed.")
+parser.add_argument("-x",dest='CreateDirsOnly', action='store_true', default=False)
 args = parser.parse_args()
 
 # ----------------------------- Initialization ------------------------------ #
@@ -148,24 +149,25 @@ for template_file in collection:
 			out_template.write("\n")
 
 # -- Call srun in each directory.
-for i in range(size_sweep):
-	dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
-	os.chdir(dirname)
+if not args.CreateDirsOnly:
+	for i in range(size_sweep):
+		dirname = ConstructDirnameFromLoopIndex(yamlFile, i)
+		os.chdir(dirname)
 
-	# -- Create the files for stdout and stderr.
-	std_basename = "{}-{:05g}".format(yamlFile['Batch Name'],i)
-	f_stdout = open(std_basename+".out", 'w')
-	f_stderr = open(std_basename+".err", 'w')
-	try:
-		proc = subprocess.check_call(["sbatch", "{}".format(yamlFile['Batch File'][0])],
-		                         	 stdin=None,
-		                         	 stdout=f_stdout,
-		                         	 stderr=f_stderr)
-	except FileNotFoundError:
-		print("Your cluster does not seem to support SLURM. Start your jobs manually.")
-		pass
-	except subprocess.CalledProcessError:
-		pass
-	f_stdout.close()
-	f_stderr.close()
-	os.chdir("../")
+		# -- Create the files for stdout and stderr.
+		std_basename = "{}-{:05g}".format(yamlFile['Batch Name'],i+1)
+		f_stdout = open(std_basename+".out", 'w')
+		f_stderr = open(std_basename+".err", 'w')
+		try:
+			proc = subprocess.check_call(["sbatch", "{}".format(yamlFile['Batch File'][0])],
+			                         	 stdin=None,
+			                         	 stdout=f_stdout,
+			                         	 stderr=f_stderr)
+		except FileNotFoundError:
+			print("Your cluster does not seem to support SLURM. Start your jobs manually.")
+			pass
+		except subprocess.CalledProcessError:
+			pass
+		f_stdout.close()
+		f_stderr.close()
+		os.chdir("../")
