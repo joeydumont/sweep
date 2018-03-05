@@ -41,7 +41,13 @@ parser.add_argument("config",
 					type=str,
 					help="YAML config file where the template files, the files \
 							to be copied or linked are listed.")
-parser.add_argument("-x",dest='CreateDirsOnly', action='store_true', default=False)
+parser.add_argument("-x",
+	                dest='CreateDirsOnly',
+	                action='store_true',
+	                default=False,
+	                help="If enabled, the directory structure will be created, \
+	                		and the template files written, but sbatch will not\
+	                		be executed.")
 args = parser.parse_args()
 
 # ----------------------------- Initialization ------------------------------ #
